@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from matplotlib import pyplot as plt
+import track_red as track
 
 
 def find_red_center(img, convert_hsv=True):
@@ -28,36 +28,26 @@ def find_red_center(img, convert_hsv=True):
 
 if __name__ == "__main__":
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(-1)
+    tracker = track.RedTracker()
 
-
-    while(cap.isOpened()):
+    while(True):
         # Capture frame-by-frame
         ret, frame = cap.read()
 
-        # Our operations on the frame come here
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        posX, posY = tracker.find_red_center(frame)
 
-        # Display the resulting frame
-        cv2.imshow('frame',gray)
+        # Our operations on the frame come here
+        cv2.circle(frame,(posX,posY),2,(255,0,0),5)
+
+        cv2.imshow('image',frame)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     # When everything done, release the capture
     cap.release()
     cv2.destroyAllWindows()
-    img = cv2.imread('redball.jpg',1)
 
-    posX, posY = find_red_center(img)
 
-    cv2.circle(img,(posX,posY),2,(255,0,0),5)
-
-    cv2.imshow('image',img)
-
-    k = cv2.waitKey(0) & 0xFF
-    if k == 27:         # wait for ESC key to exit
-        cv2.destroyAllWindows()
-    elif k == ord('s'): # wait for 's' key to save and exit
-        cv2.imwrite('messigray.png',img)
-        cv2.destroyAllWindows()
 
