@@ -17,8 +17,12 @@ def find_red_center(img, convert_hsv=True):
     mask = cv2.bitwise_or(mask1, mask2)
 
     #consider doing erode/dilate cycle to clean up object
+    kernel = np.ones((5,5),np.uint8)
+    erosion = cv2.erode(mask,kernel,iterations = 2)
+    dilation = cv2.dilate(erosion,kernel,iterations = 1)
+    cv2.imshow('post-processed',dilation)
 
-    M = cv2.moments(mask)
+    M = cv2.moments(dilation)
 
     posX = int(M['m10']/M['m00'])
     posY = int(M['m01']/M['m00'])
