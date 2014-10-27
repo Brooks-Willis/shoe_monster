@@ -31,7 +31,6 @@ class ObjectTracker:
 		track_im_visualize = track_im.copy()
 		# convert to (x,y,w,h)
 		track_roi = (self.last_detection[0],self.last_detection[1],self.last_detection[2]-self.last_detection[0],self.last_detection[3]-self.last_detection[1])
-
 		# Setup the termination criteria, either 10 iteration or move by atleast 1 pt
 		# this is done to plot intermediate results of mean shift
 		for max_iter in range(1,10):
@@ -64,12 +63,26 @@ def mouse_event(event,x,y,flag,im):
 			# cv2.circle(img.query_img_visualize,(x,y),5,(255,0,0),5)
 			img.state = img.ROI_SELECTED
 			tracker.get_query_histogram()
-			tracker.last_detection = [img.roi[0],img.roi[1],img.roi[0]+img.roi[2],img.roi[1]+img.roi[3]]
+			tracker.last_detection = img.roi
 
 
 if __name__ == '__main__':
+
+	cap = cv2.VideoCapture(0)
+	ret, frame = cap.read()
+	cv2.namedWindow("MYWIN")
+
 	img = cv2.imread('/home/rboy/catkin_ws/src/shoe_monster/images/shoe2_right.jpg')
-	img = np.array(cv2.resize(img,(img.shape[1]/2,img.shape[0]/2)))
+	scale,dim = max([(float(frame.shape[i])/img.shape[i],i) for i in [0,1]])
+	img = np.array(cv2.resize(img,(int(img.shape[1]*scale),int(img.shape[0]*scale))))
+	crop_dim = 1-dim
+	crop_min = (img.shape[crop_dim]-frame.shape[crop_dim])/2
+	crop_max = crop_min+frame.shape[crop_dim]
+	if crop_dim == 1:
+		img = img[:,crop_min:crop_max]
+	else:
+		img = img[crop_min:crop_max,:]
+
 	img = TargetImg(img)
 
 	cv2.namedWindow("OBJSEL")
@@ -77,12 +90,10 @@ if __name__ == '__main__':
 	cv2.imshow("OBJSEL",img.img)
 
 	tracker = ObjectTracker(img)
-	cap = cv2.VideoCapture(0)
-	cv2.namedWindow("MYWIN")
 
 	while True:
 		ret, frame = cap.read()
-		frame = np.array(cv2.resize(frame,(frame.shape[1]/2,frame.shape[0]/2)))
+		frame = np.array(cv2.resize(frame,(frame.shape[1],frame.shape[0])))
 
 		if tracker.query_img.state == TargetImg.ROI_SELECTED:
 			tracker.track(frame)
@@ -95,7 +106,6 @@ if __name__ == '__main__':
 									  tracker.query_img.roi[0]:tracker.query_img.roi[2],:])
 
 			cv2.rectangle(combined_img,(tracker.last_detection[0],tracker.last_detection[1]),(tracker.last_detection[2],tracker.last_detection[3]),(0,0,255),2)
-
 			cv2.imshow("MYWIN",combined_img)
 		else:
 			cv2.imshow("MYWIN",frame)
