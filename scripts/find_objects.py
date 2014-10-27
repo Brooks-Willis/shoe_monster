@@ -6,6 +6,8 @@ import track_red as track
 import rospy
 from matplotlib import pyplot as plt
 
+from track_shoe import Shoe
+
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
@@ -17,6 +19,7 @@ class ObjectTracking:
         self.camera_listener = rospy.Subscriber("camera/image_raw",Image, self.track_object)
         self.target_pub = rospy.Publisher("target", Target)
         self.bridge = CvBridge()
+        self.identifier = None
         print "initiated"
 
     def track_object(self,msg):
@@ -30,7 +33,10 @@ class ObjectTracking:
 
         edges.find_edges(image)
 
-        obj_center = identifier.find_center(image)
+        if not self.identifier:
+            self.identifier = RedBall(image)
+
+        obj_center = self.identifier.find_center(image)
 
         self.target_pub.publish(obj_center)
 
