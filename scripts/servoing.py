@@ -16,6 +16,7 @@ class Servoing(object):
 
     def idle(self):
         """This should be an idle scanning for shoes behavior"""
+        self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.0))
         print "Idling"
 
     def track(self):
