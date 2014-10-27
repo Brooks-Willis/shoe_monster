@@ -1,0 +1,14 @@
+<launch>
+  <!--  -->
+  <arg name="img_source" default="neato"/>
+  <arg name="ip"/>
+
+  <include file="$(find neato_node)/launch/bringup.launch">
+    <arg name="host" value="$(arg ip)"/>
+  </include>
+
+  
+  <node name="find_objects" pkg="shoe_monster" type="find_objects.py" cwd="node" args="$(arg img_source)"/>
+  <node name="servoing" pkg="shoe_monster" type="servoing.py" cwd="node"/>
+    
+</launch>
