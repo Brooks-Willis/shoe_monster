@@ -5,6 +5,8 @@ import cv2
 import track_red as track
 import rospy
 
+from track_shoe import Shoe
+
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
@@ -16,6 +18,7 @@ class ObjectTracking:
         self.camera_listener = rospy.Subscriber("camera/image_raw",Image, self.track_object)
         self.target_pub = rospy.Publisher("target", Target)
         self.bridge = CvBridge()
+        self.identifier = None
         print "initiated"
 
     def track_object(self,msg):
@@ -23,9 +26,10 @@ class ObjectTracking:
         # Bridge for color image. This page was very useful for deteermaning image types: http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         image = np.asanyarray(cv_image)
-        identifier = RedBall(image)
+        if not self.identifier:
+            self.identifier = RedBall(image)
 
-        obj_center = identifier.find_center(image)
+        obj_center = self.identifier.find_center(image)
 
         self.target_pub.publish(obj_center)
 
