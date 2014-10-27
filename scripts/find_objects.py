@@ -5,8 +5,6 @@ import cv2
 import track_red as track
 import rospy
 
-from track_shoe import Shoe
-
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
