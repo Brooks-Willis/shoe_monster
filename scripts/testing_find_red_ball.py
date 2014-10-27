@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import track_red as track
 import rospy
+from matplotlib import pyplot as plt
 
 
 from sensor_msgs.msg import Image
@@ -23,7 +24,11 @@ class ObjectTracking:
         # Bridge for color image. This page was very useful for deteermaning image types: http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         image = np.asanyarray(cv_image)
+
+        edges = Shoe()
         identifier = RedBall(image)
+
+        edges.find_edges(image)
 
         obj_center = identifier.find_center(image)
 
@@ -39,7 +44,7 @@ class RedBall:
             img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         bottom_red = np.array([0,50,50])
-        lower_red = np.array([10,255,255])
+        lower_red = np.array([5,255,255])
         upper_red = np.array([160,50,50])
         top_red = np.array([179,255,255])
 
@@ -68,6 +73,21 @@ class RedBall:
         cv2.waitKey(20)
 
         return Target(x = posX, y = posY, x_img_size = self.image_size[0],y_img_size = self.image_size[1])
+
+class Shoe:
+    def __init__(self):
+        pass
+
+    def find_edges(self, msg):
+
+        edges = cv2.Canny(msg,100,200)
+
+        plt.subplot(121),plt.imshow(msg,cmap = 'gray')
+        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+        plt.subplot(122),plt.imshow(edges,cmap = 'gray')
+        plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+
+        plt.show()
 
 if __name__ == "__main__":
 
