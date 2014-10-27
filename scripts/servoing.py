@@ -16,7 +16,10 @@ class Servoing(object):
 
     def idle(self):
         """This should be an idle scanning for shoes behavior"""
-        self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.0))
+        if self.turn_percent >= 0:
+            self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.4))
+        else:
+            self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, -0.4))
         print "Idling"
 
     def track(self):
@@ -26,7 +29,7 @@ class Servoing(object):
         self.turn_percent = -(self.x_target-x_center)/x_center
         velocity = Vector3(0.8*self.velocity_percent, 0.0, 0.0)
         turn = Vector3(0.0, 0.0, 0.5*self.turn_percent)
-
+        print "Tracking"
         self.velocity = Twist(velocity, turn)
 
     def scan_received(self, msg):
@@ -47,7 +50,7 @@ class Servoing(object):
         if len(valid_ranges) > 0: #Keeps last values if no new objects detected
             min_angle = min(valid_ranges, key=valid_ranges.get)
             min_distance = valid_ranges[min_angle]
-        print'angle', min_angle, 'distance', min_distance
+        #print'angle', min_angle, 'distance', min_distance
         self.velocity_percent = min_distance/max_distance
 
     def target_received(self, msg):
