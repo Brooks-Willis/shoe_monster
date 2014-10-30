@@ -1,0 +1,8 @@
+Todo: 
+Assess histogram and points of interest, where do they work/not work
+Explore other avenues for shoe recogniton 
+Add basic object avoidance
+Automate shoe identification (maybe hstogram and point recognition)
+Determine when to use which shoe tracking method
+Contour tracking?
+Integraton! 
