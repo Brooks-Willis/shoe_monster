@@ -6,6 +6,7 @@ from shoe_monster.msg import Target
 
 
 class Shoe(object):
+    #States for selecting the region of interest
     SELECTING_ROI_PT_1 = 0
     SELECTING_ROI_PT_2 = 1
     ROI_SELECTED = 2
@@ -18,6 +19,7 @@ class Shoe(object):
         cv2.setMouseCallback("OBJSEL",self.mouse_event)
         cv2.imshow("OBJSEL",self.query_img)
 
+        #wait to select the ROI
         while True:
             if self.state != Shoe.ROI_SELECTED:
                 cv2.waitKey(100)
@@ -28,6 +30,9 @@ class Shoe(object):
         self.get_query_histogram()
 
     def scale_img(self, test_img, shoe_img):
+        '''Scale shoe_img to match test_img, in case those are different
+        (doesn't matter right now)
+        '''
         scale,dim = max([(float(test_img.shape[i])/shoe_img.shape[i],i) for i in [0,1]])
         shoe_img = np.array(cv2.resize(shoe_img,(int(shoe_img.shape[1]*scale),int(shoe_img.shape[0]*scale))))
         crop_dim = 1-dim
@@ -40,6 +45,9 @@ class Shoe(object):
         return shoe_img
 
     def mouse_event(self,event,x,y,flag,im):
+        '''code for selecting the region of interest
+        runs on mouse click
+        '''
         if event == cv2.EVENT_FLAG_LBUTTON:
             if self.state == Shoe.SELECTING_ROI_PT_1:
                 self.query_roi = [x,y,-1,-1]
@@ -53,6 +61,8 @@ class Shoe(object):
                 self.get_query_histogram()
 
     def get_query_histogram(self):
+        '''calculate the histogram to try to match
+        '''
         # set up the ROI for tracking
         roi = self.query_img[self.query_roi[1]:self.query_roi[3],self.query_roi[0]:self.query_roi[2],:]
         hsv_roi =  cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
@@ -61,6 +71,7 @@ class Shoe(object):
         cv2.normalize(self.query_hist,self.query_hist,0,255,cv2.NORM_MINMAX)
 
     def find_center(self,im):
+        '''actually do the tracking!'''
         im_hsv = cv2.cvtColor(im,cv2.COLOR_BGR2HSV)
         track_im = cv2.calcBackProject([im_hsv],[0],self.query_hist,[0,255],1)
 
@@ -75,6 +86,7 @@ class Shoe(object):
             cv2.rectangle(track_im_visualize,(intermediate_roi[0],intermediate_roi[1]),(intermediate_roi[0]+intermediate_roi[2],intermediate_roi[1]+intermediate_roi[3]),max_iter/10.0,2)
 
         self.last_detection = [intermediate_roi[0],intermediate_roi[1],intermediate_roi[0]+intermediate_roi[2],intermediate_roi[1]+intermediate_roi[3]]
+        #get the center of the box
         posX = (self.last_detection[0]+self.last_detection[2])/2
         posY = (self.last_detection[1]+self.last_detection[3])/2
 
