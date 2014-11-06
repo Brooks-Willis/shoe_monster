@@ -26,10 +26,10 @@ class ObjectTracking:
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         image = np.asanyarray(cv_image)
 
-        edges = Shoe()
-        identifier = RedBall(image)
+        # edges = Shoe()
+        # identifier = RedBall(image)
 
-        edges.find_edges(image)
+        # edges.find_edges(image)
 
         if not self.identifier:
             self.identifier = RedBall(image)
