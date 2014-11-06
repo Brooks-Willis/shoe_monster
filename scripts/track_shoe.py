@@ -86,6 +86,14 @@ class Shoe(object):
             cv2.rectangle(track_im_visualize,(intermediate_roi[0],intermediate_roi[1]),(intermediate_roi[0]+intermediate_roi[2],intermediate_roi[1]+intermediate_roi[3]),max_iter/10.0,2)
 
         self.last_detection = [intermediate_roi[0],intermediate_roi[1],intermediate_roi[0]+intermediate_roi[2],intermediate_roi[1]+intermediate_roi[3]]
+        
+        update_hist = True
+        if update_hist:
+            self.query_img = track_im
+            self.query_roi = intermediate_roi
+            self.get_query_histogram()
+
+
         #get the center of the box
         posX = (self.last_detection[0]+self.last_detection[2])/2
         posY = (self.last_detection[1]+self.last_detection[3])/2
