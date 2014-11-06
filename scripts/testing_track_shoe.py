@@ -19,6 +19,7 @@ class ObjectTracking:
         self.target_pub = rospy.Publisher("target", Target)
         self.bridge = CvBridge()
         self.identifier = None
+        self.i = 0
         print "initiated"
 
     def track_object(self,msg):
@@ -28,12 +29,15 @@ class ObjectTracking:
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         image = np.asanyarray(cv_image)
         if not self.identifier:
-            shoe_img = cv2.imread('/home/rboy/catkin_ws/src/shoe_monster/images/shoe2_right.jpg')
-            self.identifier = Shoe(image)
+            self.i += 1
+            if self.i>50:
+                #shoe_img = cv2.imread('/home/rboy/catkin_ws/src/shoe_monster/images/shoe2_right.jpg')
+                self.identifier = Shoe(image)
 
-        obj_center = self.identifier.find_center(image)
+        if self.identifier:
+            obj_center = self.identifier.find_center(image)
 
-        self.target_pub.publish(obj_center)
+            self.target_pub.publish(obj_center)
 
 class RedBall:
     def __init__(self,image):

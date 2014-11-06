@@ -13,6 +13,8 @@ class Servoing(object):
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.scan = rospy.Subscriber('scan', LaserScan, self.scan_received)
         self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.0))
+        self.turn_percent = 0
+        self.velocity_percent = 0
 
     def idle(self):
         """This should be an idle scanning for shoes behavior"""
@@ -71,6 +73,7 @@ class Servoing(object):
         r = rospy.Rate(10)
         while not(rospy.is_shutdown()):
             self.cmd_vel.publish(self.velocity)
+            r.sleep()
 
 
 if __name__ == '__main__':

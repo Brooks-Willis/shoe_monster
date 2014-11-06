@@ -7,8 +7,9 @@
     <arg name="host" value="$(arg ip)"/>
   </include>
 
-  
-  <node name="find_objects" pkg="shoe_monster" type="find_objects.py" cwd="node" args="$(arg img_source)"/>
+ 
+  <node name="track_shoes" pkg="shoe_monster" type="testing_track_shoe.py" cwd="node" args="$(arg img_source)" output="screen"/> 
+  <!--
+  <node name="find_objects" pkg="shoe_monster" type="find_objects.py" cwd="node" args="$(arg img_source)" output="screen"/> -->
   <node name="servoing" pkg="shoe_monster" type="servoing.py" cwd="node"/>
-    
 </launch>
