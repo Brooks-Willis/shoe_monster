@@ -89,6 +89,8 @@ class Shoe(object):
             (ret, intermediate_roi) = cv2.meanShift(track_im,track_roi,term_crit)
             cv2.rectangle(track_im_visualize,(intermediate_roi[0],intermediate_roi[1]),(intermediate_roi[0]+intermediate_roi[2],intermediate_roi[1]+intermediate_roi[3]),max_iter/10.0,2)
 
+        # find average of secion of track_im 2,3 is width and height for prob stuff
+        
         self.last_detection = [intermediate_roi[0],intermediate_roi[1],intermediate_roi[0]+intermediate_roi[2],intermediate_roi[1]+intermediate_roi[3]]
         
         x_min,y_min,x_max,y_max = self.last_detection
