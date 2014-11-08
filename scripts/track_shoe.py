@@ -67,7 +67,7 @@ class Shoe(object):
         roi = self.query_img[self.query_roi[1]:self.query_roi[3],self.query_roi[0]:self.query_roi[2],:]
         hsv_roi =  cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
         # play with the number of histogram bins by changing histSize
-        self.query_hist = cv2.calcHist([hsv_roi],[0],mask=None,histSize=[256],ranges=[0,255])
+        self.query_hist = cv2.calcHist([hsv_roi],[0],mask=None,histSize=[500],ranges=[0,255])
         cv2.normalize(self.query_hist,self.query_hist,0,255,cv2.NORM_MINMAX)
 
     def find_center(self,im):
@@ -75,11 +75,15 @@ class Shoe(object):
         im_hsv = cv2.cvtColor(im,cv2.COLOR_BGR2HSV)
         track_im = cv2.calcBackProject([im_hsv],[0],self.query_hist,[0,255],1)
 
+        cv2.imshow('heatmap',track_im)
+
         track_im_visualize = track_im.copy()
         # convert to (x,y,w,h)
         track_roi = (self.last_detection[0],self.last_detection[1],self.last_detection[2]-self.last_detection[0],self.last_detection[3]-self.last_detection[1])
         # Setup the termination criteria, either 10 iteration or move by atleast 1 pt
         # this is done to plot intermediate results of mean shift
+
+        #change this to use contours/connected component instead of mean shift?
         for max_iter in range(1,10):
             term_crit = ( cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, max_iter, 1 )
             (ret, intermediate_roi) = cv2.meanShift(track_im,track_roi,term_crit)
@@ -87,10 +91,13 @@ class Shoe(object):
 
         self.last_detection = [intermediate_roi[0],intermediate_roi[1],intermediate_roi[0]+intermediate_roi[2],intermediate_roi[1]+intermediate_roi[3]]
         
-        update_hist = True
-        if update_hist:
-            self.query_img = track_im
-            self.query_roi = intermediate_roi
+        x_min,y_min,x_max,y_max = self.last_detection
+
+        prob = (255-np.mean(track_im[x_min:x_max,y_min:y_max]))/255.0
+
+        if prob>.97:
+            self.query_img = im
+            self.query_roi = self.last_detection
             self.get_query_histogram()
 
 
@@ -100,6 +107,8 @@ class Shoe(object):
 
         cv2.circle(im,(posX,posY),2,(255,0,0),10)
         cv2.imshow('image',im)
+        cv2.rectangle(self.query_img,(self.query_roi[0],self.query_roi[1]),(self.query_roi[2],self.query_roi[3]),1.0,2)
+        cv2.imshow('query_img',self.query_img)
         cv2.waitKey(20)
 
-        return Target(x = posX, y = posY, x_img_size = self.query_img.shape[0],y_img_size = self.query_img.shape[1])
+        return prob, Target(x = posX, y = posY, x_img_size = self.query_img.shape[0],y_img_size = self.query_img.shape[1])

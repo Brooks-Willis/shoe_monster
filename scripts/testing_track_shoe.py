@@ -35,9 +35,11 @@ class ObjectTracking:
                 self.identifier = Shoe(image)
 
         if self.identifier:
-            obj_center = self.identifier.find_center(image)
-
-            self.target_pub.publish(obj_center)
+            prob, obj_center = self.identifier.find_center(image)
+            if prob > .8:
+                self.target_pub.publish(obj_center)
+            else:
+                self.target_pub.publish(Target(x = -1, y = -1, x_img_size = -1,y_img_size = -1)
 
 class RedBall:
     def __init__(self,image):
