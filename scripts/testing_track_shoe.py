@@ -14,13 +14,49 @@ from shoe_monster.msg import Target
 from cv_bridge import CvBridge, CvBridgeError
 
 class ObjectTracking:
+    SELECTING_QUERY_IMG = 0
+    SELECTING_ROI_PT_1 = 1
+    SELECTING_ROI_PT_2 = 2
+
     def __init__(self):
         self.camera_listener = rospy.Subscriber("camera/image_raw",Image, self.track_object)
         self.target_pub = rospy.Publisher("target", Target)
         self.bridge = CvBridge()
-        self.identifier = None
+        self.identifiers = [Shoe()]
         self.i = 0
+        self.state = self.SELECTING_QUERY_IMG
+        self.query_roi=None
+        self.query_img = None
+        self.current_frame = None
+        self.current_center = None
+
+        cv2.namedWindow("Chase the Shoe")
+        cv2.setMouseCallback("Chase the Shoe",self.mouse_event)
+
         print "initiated"
+
+    def show_img(self):
+        if self.state == self.SELECTING_QUERY_IMG:
+            if self.query_roi != None: #Runs after selecting inital roi
+                # add the query image to the side
+                combined_img = np.zeros((self.current_frame.shape[0],
+                                         self.current_frame.shape[1]+(self.query_roi[2]-self.query_roi[0]),
+                                         self.current_frame.shape[2]),
+                                        dtype=self.current_frame.dtype)
+                combined_img[:,0:self.current_frame.shape[1],:] = self.current_frame
+                combined_img[0:(self.query_roi[3]-self.query_roi[1]),self.current_frame.shape[1]:,:] = (
+                        self.query_img[self.query_roi[1]:self.query_roi[3],
+                                          self.query_roi[0]:self.query_roi[2],:])
+                print self.current_center
+                cv2.circle(combined_img,self.current_center,2,(255,0,0),10)
+
+                cv2.imshow("Chase the Shoe",combined_img)
+            else:
+                cv2.imshow("Chase the Shoe",self.current_frame)
+        else:
+            cv2.imshow("Chase the Shoe",self.query_img_visualize)
+        cv2.waitKey(20)
+
 
     def track_object(self,msg):
 
@@ -28,18 +64,46 @@ class ObjectTracking:
         print "hello"
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         image = np.asanyarray(cv_image)
-        if not self.identifier:
-            self.i += 1
-            if self.i>50:
-                #shoe_img = cv2.imread('/home/rboy/catkin_ws/src/shoe_monster/images/shoe2_right.jpg')
-                self.identifier = Shoe(image)
+        self.current_frame = image
 
-        if self.identifier:
-            prob, obj_center = self.identifier.find_center(image)
-            if prob > .8:
-                self.target_pub.publish(obj_center)
+        objs = []
+        for idr in self.identifiers:
+            prob, obj_center = idr.find_center(image.copy())
+            if prob > .7:
+                objs.append(obj_center)
+        if len(objs)>0:
+            xs,ys,x_ss, y_ss = zip(*objs)
+            out = Target(x=int(np.mean(xs)),
+                         y = int(np.mean(ys)),
+                         x_img_size=int(np.mean(x_ss)),
+                         y_img_size=int(np.mean(y_ss)))
+        else:
+            out = Target(x=-1,y=-1,x_img_size=-1,y_img_size=-1)
+        print prob
+        self.current_center = out.x,out.y
+        print self.current_center
+        print self.current_frame.shape
+        self.target_pub.publish(out)
+        self.show_img()
+        
+
+    def mouse_event(self,event,x,y,flag,im):
+        if event == cv2.EVENT_FLAG_LBUTTON:
+            if self.state == self.SELECTING_QUERY_IMG:
+                self.query_img_visualize = self.current_frame.copy()
+                self.query_img = self.current_frame
+                self.query_roi = None
+                self.state = self.SELECTING_ROI_PT_1
+            elif self.state == self.SELECTING_ROI_PT_1:
+                self.query_roi = [x,y,-1,-1]
+                cv2.circle(self.query_img_visualize,(x,y),5,(255,0,0),5)
+                self.state = self.SELECTING_ROI_PT_2
             else:
-                self.target_pub.publish(Target(x = -1, y = -1, x_img_size = -1,y_img_size = -1))
+                self.query_roi[2:] = [x,y]
+                cv2.circle(self.query_img_visualize,(x,y),5,(255,0,0),5)
+                self.state = self.SELECTING_QUERY_IMG
+                for idr in self.identifiers:
+                    idr.set_query(self.query_img,self.query_roi)
 
 if __name__ == "__main__":
 
