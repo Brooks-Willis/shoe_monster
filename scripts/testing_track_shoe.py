@@ -39,47 +39,7 @@ class ObjectTracking:
             if prob > .8:
                 self.target_pub.publish(obj_center)
             else:
-                self.target_pub.publish(Target(x = -1, y = -1, x_img_size = -1,y_img_size = -1)
-
-class RedBall:
-    def __init__(self,image):
-        # Determine size of image
-        self.image_size = image.shape
-
-    def find_center(self, image, convert_hsv=True):
-        if convert_hsv:
-            img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-        bottom_red = np.array([0,50,50])
-        lower_red = np.array([10,255,255])
-        upper_red = np.array([160,50,50])
-        top_red = np.array([179,255,255])
-
-        mask1 = cv2.inRange(img, bottom_red, lower_red)
-        mask2 = cv2.inRange(img, upper_red, top_red)
-        mask = cv2.bitwise_or(mask1, mask2)
-
-        #consider doing erode/dilate cycle to clean up object
-        kernel = np.ones((5,5),np.uint8)
-        erosion = cv2.erode(mask,kernel,iterations = 2)
-        dilation = cv2.dilate(erosion,kernel,iterations = 1)
-
-        M = cv2.moments(dilation)
-
-        if M['m00'] >= 10: # Only determine average moment when it detects noticible red object
-            posX = int(M['m10']/M['m00'])
-            posY = int(M['m01']/M['m00'])
-
-        else: # No object found
-            posX = -1
-            posY = -1
-
-        cv2.circle(image,(posX,posY),2,(255,0,0),10)
-        cv2.imshow('post-processed',dilation)
-        cv2.imshow('image',image)
-        cv2.waitKey(20)
-
-        return Target(x = posX, y = posY, x_img_size = self.image_size[0],y_img_size = self.image_size[1])
+                self.target_pub.publish(Target(x = -1, y = -1, x_img_size = -1,y_img_size = -1))
 
 if __name__ == "__main__":
 
