@@ -17,6 +17,8 @@ class ObjectTracker:
 		self.matcher = cv2.BFMatcher()
 		self.query_img = None
 		self.query_roi = None
+		self.query_img_test = None #For testing update_query_roi
+		self.query_roi_test = None #For testing update_query_roi
 		self.last_detection = None
 
 		self.corner_threshold = 0.0
@@ -54,7 +56,7 @@ class ObjectTracker:
 	def track(self,im):
 		im_bw = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
 		training_keypoints = self.detector.detect(im_bw)
-
+		#print len(training_keypoints)
 		dc, training_descriptors = self.extractor.compute(im_bw,training_keypoints)
 
 		matches = self.matcher.knnMatch(self.query_descriptors,training_descriptors,k=2)
@@ -67,7 +69,7 @@ class ObjectTracker:
 
 		self.matching_query_pts = np.zeros((len(good_matches),2))
 		self.matching_training_pts = np.zeros((len(good_matches),2))
-
+		print good_matches
 		track_im = np.zeros(im_bw.shape)
 		for idx in range(len(good_matches)):
 			match = good_matches[idx]
@@ -79,7 +81,7 @@ class ObjectTracker:
 
 		# convert to (x,y,w,h)
 		track_roi = (self.last_detection[0],self.last_detection[1],self.last_detection[2]-self.last_detection[0],self.last_detection[3]-self.last_detection[1])
-
+		
 		# Setup the termination criteria, either 10 iteration or move by atleast 1 pt
 		# this is done to plot intermediate results of mean shift
 		for max_iter in range(1,10):
@@ -118,7 +120,23 @@ def mouse_event(event,x,y,flag,im):
 			tracker.state = tracker.SELECTING_QUERY_IMG
 			tracker.get_query_keypoints()
 
-	#if event == cv2.EVENT_FLAG_RBUTTON:
+	if event == cv2.EVENT_FLAG_RBUTTON: #This is just for testing the update_query_roi function
+		if tracker.state == tracker.SELECTING_QUERY_IMG:
+			tracker.query_img_visualize = frame.copy()
+			tracker.query_img_test = frame
+			tracker.query_roi_test = None
+			tracker.state = tracker.SELECTING_ROI_PT_1
+		elif tracker.state == tracker.SELECTING_ROI_PT_1:
+			tracker.query_roi_test = [x,y,-1,-1]
+			cv2.circle(tracker.query_img_visualize,(x,y),5,(255,0,0),5)
+			tracker.state = tracker.SELECTING_ROI_PT_2
+		else:
+			tracker.query_roi_test[2:] = [x,y]
+			tracker.last_detection = tracker.query_roi_test
+			cv2.circle(tracker.query_img_visualize,(x,y),5,(255,0,0),5)
+			tracker.state = tracker.SELECTING_QUERY_IMG
+			tracker.update_query_roi(tracker.query_img_test,tracker.query_roi_test)
+
 
 if __name__ == '__main__':
 	# descriptor can be: SIFT, SURF, BRIEF, BRISK, ORB, FREAK
