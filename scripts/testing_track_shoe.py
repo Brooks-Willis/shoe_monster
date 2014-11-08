@@ -5,7 +5,7 @@ import cv2
 import track_red as track
 import rospy
 
-from track_shoe import Shoe
+from track_shoe import HistTracker, KeypointTracker
 
 
 from sensor_msgs.msg import Image
@@ -22,7 +22,7 @@ class ObjectTracking:
         self.camera_listener = rospy.Subscriber("camera/image_raw",Image, self.track_object)
         self.target_pub = rospy.Publisher("target", Target)
         self.bridge = CvBridge()
-        self.identifiers = [Shoe()]
+        self.identifiers = [HistTracker(), KeypointTracker()]
         self.i = 0
         self.state = self.SELECTING_QUERY_IMG
         self.query_roi=None
@@ -68,15 +68,15 @@ class ObjectTracking:
 
         objs = []
         for idr in self.identifiers:
-            prob, obj_center = idr.find_center(image.copy())
+            prob, obj_center = idr.track(image.copy())
             if prob > .7:
                 objs.append(obj_center)
         if len(objs)>0:
-            xs,ys,x_ss, y_ss = zip(*objs)
+            xs,ys = zip(*objs)
             out = Target(x=int(np.mean(xs)),
                          y = int(np.mean(ys)),
-                         x_img_size=int(np.mean(x_ss)),
-                         y_img_size=int(np.mean(y_ss)))
+                         x_img_size=self.query_img.shape[0],
+                         y_img_size=self.query_img.shape[1])
         else:
             out = Target(x=-1,y=-1,x_img_size=-1,y_img_size=-1)
         print prob
