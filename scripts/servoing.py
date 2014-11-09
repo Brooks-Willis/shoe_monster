@@ -11,8 +11,8 @@ class Servoing(object):
     """docstring for Servoing"""
     def __init__(self):
         self.target = rospy.Subscriber('target', Target, self.target_received)
-        self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.scan = rospy.Subscriber('scan', LaserScan, self.scan_received)
+        self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.object_dist_pub = rospy.Publisher('object_distance', Float32)
         self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.0))
         self.turn_percent = 0
