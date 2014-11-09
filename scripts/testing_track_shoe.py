@@ -22,7 +22,7 @@ class ObjectTracking:
         self.camera_listener = rospy.Subscriber("camera/image_raw",Image, self.track_object)
         self.target_pub = rospy.Publisher("target", Target)
         self.bridge = CvBridge()
-        self.identifiers = [HistTracker(), KeypointTracker()]
+        self.identifiers = [HistTracker()]#, KeypointTracker()]
         self.i = 0
         self.state = self.SELECTING_QUERY_IMG
         self.query_roi=None
@@ -33,7 +33,7 @@ class ObjectTracking:
         cv2.namedWindow("Chase the Shoe")
         cv2.setMouseCallback("Chase the Shoe",self.mouse_event)
 
-        print "initiated"
+        # print "initiated"
 
     def show_img(self):
         if self.state == self.SELECTING_QUERY_IMG:
@@ -47,7 +47,7 @@ class ObjectTracking:
                 combined_img[0:(self.query_roi[3]-self.query_roi[1]),self.current_frame.shape[1]:,:] = (
                         self.query_img[self.query_roi[1]:self.query_roi[3],
                                           self.query_roi[0]:self.query_roi[2],:])
-                print self.current_center
+                # print self.current_center
                 cv2.circle(combined_img,self.current_center,2,(255,0,0),10)
 
                 cv2.imshow("Chase the Shoe",combined_img)
@@ -61,7 +61,7 @@ class ObjectTracking:
     def track_object(self,msg):
 
         # Bridge for color image. This page was very useful for deteermaning image types: http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython
-        print "hello"
+        # print "hello"
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         image = np.asanyarray(cv_image)
         self.current_frame = image
@@ -79,10 +79,10 @@ class ObjectTracking:
                          y_img_size=self.query_img.shape[1])
         else:
             out = Target(x=-1,y=-1,x_img_size=-1,y_img_size=-1)
-        print prob
+        # print prob
         self.current_center = out.x,out.y
-        print self.current_center
-        print self.current_frame.shape
+        # print self.current_center
+        # print self.current_frame.shape
         self.target_pub.publish(out)
         self.show_img()
         
