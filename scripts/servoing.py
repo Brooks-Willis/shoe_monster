@@ -19,6 +19,7 @@ class Servoing(object):
         self.velocity_percent = 0
         self.camera_FOV = 52 #In degrees
         self.valid_ranges = {} #Dict of valid data points and angles in degrees 
+        self.x_target = None
 
     def idle(self):
         """This should be an idle scanning for shoes behavior"""
@@ -46,6 +47,11 @@ class Servoing(object):
     def scan_received(self, msg):
         """This should look in the general area where we are seeing a shoe to 
         determine the distance to said shoe"""
+
+        if self.x_target == None:
+            print "target does not exits"
+            return
+
         min_angle = 0 #Angle to nearest object
         min_distance = 5 #Distance to closest object
         max_distance = 5 #Clipping off readings above this distance
