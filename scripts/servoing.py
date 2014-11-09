@@ -5,6 +5,7 @@ import numpy as np
 from geometry_msgs.msg import Twist, Vector3
 from shoe_monster.msg import Target
 from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Float32
 
 class Servoing(object):
     """docstring for Servoing"""
@@ -12,9 +13,12 @@ class Servoing(object):
         self.target = rospy.Subscriber('target', Target, self.target_received)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.scan = rospy.Subscriber('scan', LaserScan, self.scan_received)
+        self.object_dist_pub = rospy.Publisher('object_distance', Float32)
         self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.0))
         self.turn_percent = 0
         self.velocity_percent = 0
+        self.camera_FOV = 52 #In degrees
+        self.valid_ranges = {} #Dict of valid data points and angles in degrees 
 
     def idle(self):
         """This should be an idle scanning for shoes behavior"""
@@ -24,36 +28,54 @@ class Servoing(object):
             self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, -0.4))
         print "Idling"
 
+    def object_angle(self):
+        return int(self.camera_FOV * (self.x_target/self.x_img_size) - self.camera_FOV/2.0) # angle reletive to 0 (in center)
+
     def track(self):
-        """Determines the heading to the object, and creates the Twist message"""
-        x_center = self.x_img_size/2.0
-            
+        """Determines the heading to the object and creates the Twist message"""
+        x_center = int(self.x_img_size/2.0)
+        
+        # Simple Proportional controller
         self.turn_percent = -(self.x_target-x_center)/x_center
         velocity = Vector3(0.8*self.velocity_percent, 0.0, 0.0)
         turn = Vector3(0.0, 0.0, 0.5*self.turn_percent)
-        print "Tracking"
         self.velocity = Twist(velocity, turn)
 
     def scan_received(self, msg):
         """This should look in the general area where we are seeing a shoe to 
         determine the distance to said shoe"""
-        l_bound = 45 #Degrees off of zero (measure from camera)
-        r_bound = -45 #Degrees off of zero (measure from camera)
-
-        valid_ranges = {} #Dict of valid data points and angles in degrees
         min_angle = 0 #Angle to nearest object
-        min_distance = 0 #Distance to closest object
+        min_distance = 5 #Distance to closest object
         max_distance = 5 #Clipping off readings above this distance
-        
-        for i in range(46)+range(315,360): 
+        k = -int(self.camera_FOV/2) - 2   #for plus to on eaither side...used later for averaging with data outside view
+        distances_roi = {}
+        lists = []
+
+        # Looks at angles within the bound of the image (plus 2 on either side)
+        for i in range(int(self.camera_FOV/2.0) + 2)+range(360 - (int(self.camera_FOV/2.0) + 2),360):
             if msg.ranges[i] > 0 and msg.ranges[i] <= max_distance:
-                valid_ranges[i]=(msg.ranges[i])
-        #print len(valid_ranges)
-        if len(valid_ranges) > 0: #Keeps last values if no new objects detected
-            min_angle = min(valid_ranges, key=valid_ranges.get)
-            min_distance = valid_ranges[min_angle]
-        #print'angle', min_angle, 'distance', min_distance
+                if msg.ranges[i] < min_distance:
+                    min_distance = msg.ranges[i]
+                distances_roi[k] = msg.ranges[i]
+            else:
+                distances_roi[k] = 5
+            k += 1
+
+        print distances_roi
+        obj_angle = self.object_angle()
+        obj_dists = []
+
+        for i in range(-2,2):
+            print obj_angle + i
+            obj_dists.append(distances_roi[obj_angle + i])
+
+        self.object_distance = sum(obj_dists)/(len(obj_dists)*1.0)
         self.velocity_percent = min_distance/max_distance
+
+        self.object_dist_pub.publish(self.object_distance)
+
+        print "obj_angle", obj_angle
+        print 'dist of object', self.object_distance
 
     def target_received(self, msg):
         """Determines behavior based off if neato can currently see a target"""
