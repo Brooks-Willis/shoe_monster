@@ -22,7 +22,7 @@ class ObjectTracking:
         self.camera_listener = rospy.Subscriber("camera/image_raw",Image, self.track_object)
         self.target_pub = rospy.Publisher("target", Target)
         self.bridge = CvBridge()
-        self.identifiers = [HistTracker(), KeypointTracker()] 
+        self.identifiers = [HistTracker(),KeypointTracker()]
         self.i = 0
         self.state = self.SELECTING_QUERY_IMG
         self.query_roi=None
@@ -57,6 +57,10 @@ class ObjectTracking:
             cv2.imshow("Chase the Shoe",self.query_img_visualize)
         cv2.waitKey(20)
 
+    def weighted_average(self, probs, vals):
+        tot_p = sum(probs)
+        tot_v = sum([vals[i]*probs[i] for i in range(len(vals))])
+        return float(tot_v)/tot_p
 
     def track_object(self,msg):
 
@@ -69,15 +73,15 @@ class ObjectTracking:
         objs = []
         probs = []
         for idr in self.identifiers:
-            prob, obj_center = idr.track(image.copy())
+            prob, obj_center = idr.track(image.copy(),viz=True)
             if prob > .7:
                 probs.append(prob)
                 objs.append(obj_center)
         if len(objs)>0:
             xs,ys = zip(*objs)
             #TODO - Replace this with a weighted average
-            out = Target(x = int(np.mean(xs)),
-                         y = int(np.mean(ys)),
+            out = Target(x = int(self.weighted_average(probs,xs)),
+                         y = int(self.weighted_average(probs,ys)),
                          x_img_size=self.query_img.shape[0],
                          y_img_size=self.query_img.shape[1])
         else:
