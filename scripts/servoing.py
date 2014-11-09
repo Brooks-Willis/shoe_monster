@@ -18,10 +18,12 @@ class Servoing(object):
 
     def idle(self):
         """This should be an idle scanning for shoes behavior"""
-        if self.turn_percent >= 0:
+        if self.turn_percent > 0:
             self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.4))
-        else:
+        elif self.turn_percent < 0:
             self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, -0.4))
+        else:
+            self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.0))
         print "Idling"
 
     def track(self):
