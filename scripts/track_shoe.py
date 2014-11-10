@@ -239,6 +239,6 @@ class KeypointTracker(AbstractTracker):
             if viz:
                 self.viz(im)
             print "Total keypoint time:", time()-t0
-            return .75, [posX, posY]
+            return .95, [posX, posY]
         else:
             return 0, [-1, -1]
