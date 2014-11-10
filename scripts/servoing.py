@@ -40,8 +40,8 @@ class Servoing(object):
         
         # Simple Proportional controller
         self.turn_percent = -(self.x_target-x_center)/x_center
-        velocity = Vector3(0.8*self.velocity_percent, 0.0, 0.0)
-        turn = Vector3(0.0, 0.0, 0.5*self.turn_percent)
+        velocity = Vector3(0.4*self.velocity_percent, 0.0, 0.0)
+        turn = Vector3(0.0, 0.0, 0.4*self.turn_percent)
         self.velocity = Twist(velocity, turn)
 
     def scan_received(self, msg):
