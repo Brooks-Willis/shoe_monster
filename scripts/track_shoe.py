@@ -210,7 +210,6 @@ class KeypointTracker(AbstractTracker):
 
             if viz:
                 self.viz(im)
-
             return .71, [posX, posY]
         else:
             return 0, [-1, -1]
