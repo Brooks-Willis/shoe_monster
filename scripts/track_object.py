@@ -118,7 +118,7 @@ class TargetImg(object):
 
 if __name__ == '__main__':
 	# descriptor can be: SIFT, SURF, BRIEF, BRISK, ORB, FREAK
-	img = cv2.imread('/home/rboy/catkin_ws/src/shoe_monster/images/shoe2_right.jpg')
+	img = cv2.imread('/home/brooks/catkin_ws/src/shoe_monster/images/phone.jpg')
 	img = np.array(cv2.resize(img,(img.shape[1]/2,img.shape[0]/2)))
 	img = TargetImg(img)
 

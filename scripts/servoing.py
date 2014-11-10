@@ -29,7 +29,7 @@ class Servoing(object):
             self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, -0.4))
         else:
             self.velocity = Twist(Vector3(0.0, 0.0, 0.0),Vector3(0.0, 0.0, 0.0))
-        print "Idling"
+        # print "Idling"
 
     def object_angle(self):
         return int(self.camera_FOV * (self.x_target/self.x_img_size) - self.camera_FOV/2.0) # angle reletive to 0 (in center)
@@ -60,7 +60,11 @@ class Servoing(object):
         lists = []
 
         # Looks at angles within the bound of the image (plus 2 on either side)
-        for i in range(int(self.camera_FOV/2.0) + 2)+range(360 - (int(self.camera_FOV/2.0) + 2),360):
+        array_first_half = range(int(self.camera_FOV/2.0) + 2)
+        array_second_half = range(359 - (int(self.camera_FOV/2.0) + 2),360)
+        array_second_half.reverse()
+
+        for i in array_first_half + array_second_half:
             if msg.ranges[i] > 0 and msg.ranges[i] <= max_distance:
                 if msg.ranges[i] < min_distance:
                     min_distance = msg.ranges[i]
@@ -69,12 +73,10 @@ class Servoing(object):
                 distances_roi[k] = 5
             k += 1
 
-        print distances_roi
         obj_angle = self.object_angle()
         obj_dists = []
 
-        for i in range(-2,2):
-            print obj_angle + i
+        for i in range(-1,1):
             obj_dists.append(distances_roi[obj_angle + i])
 
         self.object_distance = sum(obj_dists)/(len(obj_dists)*1.0)
