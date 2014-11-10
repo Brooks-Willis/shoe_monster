@@ -126,7 +126,7 @@ class KeypointTracker(AbstractTracker):
     SELECTING_ROI = 0
     ROI_SELECTED = 1
 
-    def __init__(self, descriptor_name='SURF'):
+    def __init__(self):
         super(KeypointTracker,self).__init__()
 
         self.detector = cv2.FeatureDetector_create('FAST')
@@ -187,12 +187,12 @@ class KeypointTracker(AbstractTracker):
         '''actually do the tracking!'''
         t0 = time()
         im_bw = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
-        print "time bw:", time()-t0
+        # print "time bw:", time()-t0
         training_keypoints = self.detector.detect(im_bw)
-        print "time training:", time()-t0
+        # print "time training:", time()-t0
         #print len(training_keypoints)
         dc, training_descriptors = self.extractor.compute(im_bw,training_keypoints)
-        print "time decriptors:", time()-t0
+        # print "time decriptors:", time()-t0
         matches = self.matcher.knnMatch(self.query_descriptors,training_descriptors,k=2)
         good_matches = []
         for m,n in matches:
