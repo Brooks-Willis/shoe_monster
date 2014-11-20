@@ -8,7 +8,8 @@ from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32
 
 class Servoing(object):
-    """docstring for Servoing"""
+    """This class handles the manuvering of the robot. It takes in laser scan data, 
+    and the target location on the current camera image. Publishes a Twist message to the neato"""
     def __init__(self):
         self.target = rospy.Subscriber('target', Target, self.target_received)
         self.scan = rospy.Subscriber('scan', LaserScan, self.scan_received)
